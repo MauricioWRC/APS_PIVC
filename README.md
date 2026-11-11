@@ -7,56 +7,21 @@ Site em React, API em Python (FastAPI + OpenCV) e banco MySQL.
 
 | Programa | Versão | Onde baixar |
 |---|---|---|
-| Python | 3.12 (marque "Add python.exe to PATH" na instalação) | https://www.python.org/downloads/ |
+| Python | 3.11 a 3.13 (marque "Add python.exe to PATH" na instalação) | https://www.python.org/downloads/ |
 | Node.js | 20 ou mais novo (versão LTS) | https://nodejs.org/ |
-| MySQL Server | 8.0 ou mais novo | https://dev.mysql.com/downloads/installer/ |
 
-Qualquer instalação do MySQL serve. Durante a instalação, **anote a porta e a senha do root**:
-elas são usadas na configuração. Também é preciso uma webcam.
+O MySQL não precisa ser instalado: o instalador baixa uma versão própria. Também é preciso uma webcam.
 
 ## Instalação (uma vez)
 
-Todos os comandos são no Prompt de Comando (cmd), dentro da pasta do projeto, a que tem o `api.py`.
+**1. Rode o `instalar.bat`** (dois cliques). Ele instala as dependências do Python e do site, baixa os
+modelos de reconhecimento e um MySQL próprio em `C:\iris-mysql` (porta 3307) e cria o banco com os dados
+de exemplo. Leva alguns minutos e baixa cerca de 300 MB. Se der erro no meio, corrija o que a mensagem
+pedir e rode de novo: o que já foi feito é pulado.
 
-**1. Dependências do Python e modelos de reconhecimento**
-
-```bat
-py -3.12 -m venv .venv
-.venv\Scripts\python.exe -m pip install -r requirements.txt
-.venv\Scripts\python.exe -m processamento_imagens preparar-modelos
-```
-
-**2. Dependências do site**
-
-```bat
-cd frontend
-npm install
-copy .env.example .env
-cd ..
-```
-
-**3. Banco de dados**
-
-Troque `3306` pela porta do seu MySQL e ajuste a pasta se a versão for outra. Ele pede a senha do root.
-
-```bat
-"C:\Program Files\MySQL\MySQL Server 8.0\bin\mysql.exe" -u root -p -P 3306 --default-character-set=utf8mb4 < "sistema biometria APS.sql"
-"C:\Program Files\MySQL\MySQL Server 8.0\bin\mysql.exe" -u root -p -P 3306 --default-character-set=utf8mb4 < migracao_empresa_quimica.sql
-```
-
-**4. Porta e senha do MySQL**
-
-Copie o modelo e coloque a porta e a senha do seu MySQL:
-
-```bat
-copy config-local.exemplo.bat config-local.bat
-notepad config-local.bat
-```
-
-**5. Primeiro administrador**
-
-Ninguém entra sem rosto cadastrado, então o primeiro é pela linha de comando.
-Coloque de 3 a 5 fotos suas na pasta `dados` (de frente, com boa luz, só você na foto).
+**2. Cadastre o primeiro administrador.** Ninguém entra sem rosto cadastrado, então o primeiro é pela
+linha de comando. Coloque de 3 a 5 fotos suas na pasta `dados` (de frente, com boa luz, só você na foto)
+e, no cmd, dentro da pasta do projeto:
 
 ```bat
 call config-local.bat
@@ -77,15 +42,28 @@ Outras pessoas são cadastradas pelo administrador em *Usuários* e *Cadastro fa
 
 | Mensagem ou sintoma | O que fazer |
 |---|---|
-| `Baixe o modelo: python alinhado.py baixar-modelo` | Faltam os modelos: rode o comando `preparar-modelos` do passo 1. |
-| `Can't connect to MySQL server` (erro 2003) | O MySQL está desligado ou a porta está errada. Ligue o serviço em `services.msc` e confira `APS_DB_PORT` no `config-local.bat`. |
-| `Access denied for user 'root'` (erro 1045) | Senha errada no `config-local.bat`. |
-| `net start` responde "Acesso negado" | Abra o cmd como administrador. |
+| Instalador: "Node.js não encontrado" ou "Falta o Visual C++" | Instale pelo link que a mensagem mostra e rode o `instalar.bat` de novo. |
+| `Baixe o modelo: python alinhado.py baixar-modelo` | Faltam os modelos: rode o `instalar.bat` de novo. |
+| `Can't connect to MySQL server` (erro 2003) | O MySQL não ligou. Abra o projeto pelo `iniciar.bat`, que liga o MySQL antes da API. |
+| `Access denied for user 'root'` (erro 1045) | Senha errada no `config-local.bat` (só acontece usando outro MySQL; veja abaixo). |
 | O site abriu na porta 5174 | Já tem outro site aberto. Feche as janelas antigas do `npm run dev` e abra de novo. |
 | A câmera não abre | Use `http://localhost:5173` (não o IP) e permita a câmera no cadeado da barra de endereço. |
 | Clico em entrar e nada acontece | Capture a imagem antes de clicar em **Entrar com o rosto**. |
 | Aparece "Modo demonstração" | Falta o `frontend\.env` do passo 2. Depois de criar, reinicie o site. |
 | Rosto não reconhecido | Fique de frente e com boa luz. Se continuar, cadastre mais fotos em *Cadastro facial*. |
+
+## Usar um MySQL que já está instalado
+
+Se preferir o MySQL do seu computador (8.0 ou mais novo), importe o banco, informando a porta e a senha
+do root dele:
+
+```bat
+"C:\Program Files\MySQL\MySQL Server 8.0\bin\mysql.exe" -u root -p -P 3306 --default-character-set=utf8mb4 < "sistema biometria APS.sql"
+"C:\Program Files\MySQL\MySQL Server 8.0\bin\mysql.exe" -u root -p -P 3306 --default-character-set=utf8mb4 < migracao_empresa_quimica.sql
+```
+
+Depois copie `config-local.exemplo.bat` para `config-local.bat` e coloque a porta e a senha. Nesse caso,
+o MySQL precisa estar ligado (em `services.msc`) antes do `iniciar.bat`.
 
 ## Perfis
 
