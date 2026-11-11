@@ -1,35 +1,91 @@
 # IRIS — APS PIVC
 
 Sistema de acesso por reconhecimento facial para uma empresa química.
-Front-end em React, API em Python (FastAPI + OpenCV) e banco MySQL.
+Site em React, API em Python (FastAPI + OpenCV) e banco MySQL.
+
+## O que instalar
+
+| Programa | Versão | Onde baixar |
+|---|---|---|
+| Python | 3.12 (marque "Add python.exe to PATH" na instalação) | https://www.python.org/downloads/ |
+| Node.js | 20 ou mais novo (versão LTS) | https://nodejs.org/ |
+| MySQL Server | 8.0 ou mais novo | https://dev.mysql.com/downloads/installer/ |
+
+Qualquer instalação do MySQL serve. Durante a instalação, **anote a porta e a senha do root**:
+elas são usadas na configuração. Também é preciso uma webcam.
+
+## Instalação (uma vez)
+
+Todos os comandos são no Prompt de Comando (cmd), dentro da pasta do projeto, a que tem o `api.py`.
+
+**1. Dependências do Python e modelos de reconhecimento**
+
+```bat
+py -3.12 -m venv .venv
+.venv\Scripts\python.exe -m pip install -r requirements.txt
+.venv\Scripts\python.exe -m processamento_imagens preparar-modelos
+```
+
+**2. Dependências do site**
+
+```bat
+cd frontend
+npm install
+copy .env.example .env
+cd ..
+```
+
+**3. Banco de dados**
+
+Troque `3306` pela porta do seu MySQL e ajuste a pasta se a versão for outra. Ele pede a senha do root.
+
+```bat
+"C:\Program Files\MySQL\MySQL Server 8.0\bin\mysql.exe" -u root -p -P 3306 --default-character-set=utf8mb4 < "sistema biometria APS.sql"
+"C:\Program Files\MySQL\MySQL Server 8.0\bin\mysql.exe" -u root -p -P 3306 --default-character-set=utf8mb4 < migracao_empresa_quimica.sql
+```
+
+**4. Porta e senha do MySQL**
+
+Copie o modelo e coloque a porta e a senha do seu MySQL:
+
+```bat
+copy config-local.exemplo.bat config-local.bat
+notepad config-local.bat
+```
+
+**5. Primeiro administrador**
+
+Ninguém entra sem rosto cadastrado, então o primeiro é pela linha de comando.
+Coloque de 3 a 5 fotos suas na pasta `dados` (de frente, com boa luz, só você na foto).
+
+```bat
+call config-local.bat
+.venv\Scripts\python.exe api.py cadastrar-rosto --usuario 6 --admin dados\foto1.jpg dados\foto2.jpg dados\foto3.jpg
+```
+
+O usuário 6 é o "João da Silva" do banco de exemplo. Depois de entrar, troque o nome e o CPF em *Usuários*.
 
 ## Rodar
 
-Com tudo instalado, abra `iniciar.bat`. Ele liga o MySQL, a API e o site
-(http://localhost:5173).
+Dê dois cliques em `iniciar.bat`. Ele abre a API, o site e o navegador em http://localhost:5173.
+Para desligar, feche as janelas que ele abriu.
 
-Primeira instalação:
+Para entrar: **Ativar câmera** → **Capturar imagem** → **Entrar com o rosto**.
+Outras pessoas são cadastradas pelo administrador em *Usuários* e *Cadastro facial*.
 
-```powershell
-# banco
-mysql -u root -p --default-character-set=utf8mb4 < "sistema biometria APS.sql"
-mysql -u root -p --default-character-set=utf8mb4 < migracao_empresa_quimica.sql
+## Problemas comuns
 
-# Python
-py -3.12 -m venv .venv
-.\.venv\Scripts\python.exe -m pip install -r requirements.txt
-.\.venv\Scripts\python.exe -m processamento_imagens preparar-modelos
-
-# primeiro administrador (id da tabela usuarios + fotos do rosto)
-.\.venv\Scripts\python.exe api.py cadastrar-rosto --usuario 6 --admin foto1.jpg foto2.jpg foto3.jpg
-
-# site
-cd frontend
-npm install
-Set-Content .env "VITE_DEMO_MODE=false`nVITE_API_URL=http://localhost:8000/api"
-```
-
-Se o MySQL tiver senha, defina `$env:APS_DB_PASSWORD` antes de rodar a API.
+| Mensagem ou sintoma | O que fazer |
+|---|---|
+| `Baixe o modelo: python alinhado.py baixar-modelo` | Faltam os modelos: rode o comando `preparar-modelos` do passo 1. |
+| `Can't connect to MySQL server` (erro 2003) | O MySQL está desligado ou a porta está errada. Ligue o serviço em `services.msc` e confira `APS_DB_PORT` no `config-local.bat`. |
+| `Access denied for user 'root'` (erro 1045) | Senha errada no `config-local.bat`. |
+| `net start` responde "Acesso negado" | Abra o cmd como administrador. |
+| O site abriu na porta 5174 | Já tem outro site aberto. Feche as janelas antigas do `npm run dev` e abra de novo. |
+| A câmera não abre | Use `http://localhost:5173` (não o IP) e permita a câmera no cadeado da barra de endereço. |
+| Clico em entrar e nada acontece | Capture a imagem antes de clicar em **Entrar com o rosto**. |
+| Aparece "Modo demonstração" | Falta o `frontend\.env` do passo 2. Depois de criar, reinicie o site. |
+| Rosto não reconhecido | Fique de frente e com boa luz. Se continuar, cadastre mais fotos em *Cadastro facial*. |
 
 ## Perfis
 
@@ -51,13 +107,13 @@ As regras estão em `pode_ver`, `pode_editar` e `pode_aprovar`, no `api.py`.
 | `Reconhecimento Facial/` | Comparação dos rostos (SFace) |
 | `frontend/` | Site |
 | `tests/` | Testes |
-| `docs/` | Requisitos da APS |
+| `docs/` | Requisitos da APS e relatório de testes |
 
 ## Testes
 
-```powershell
-.\.venv\Scripts\python.exe -m unittest discover -s tests
+```bat
+.venv\Scripts\python.exe -m unittest discover -s tests
 ```
 
-Com `$env:APS_DB_TESTE = "1"` também roda o teste da API contra o MySQL, num banco
-temporário. O relatório de código para o Teams sai com `python scripts/relatorio_codigo.py`.
+Com `set APS_DB_TESTE=1` também roda o teste da API contra o MySQL, num banco temporário.
+O relatório de código para o Teams sai com `.venv\Scripts\python.exe scripts\relatorio_codigo.py`.
